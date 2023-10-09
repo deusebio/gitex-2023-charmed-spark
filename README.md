@@ -5,6 +5,7 @@ This repository contains the material of the Demo used for Gitex 2023 for Charme
 ## Prerequisite
 
 * Ubuntu 22.04
+* Kaggle API Key to download the data
 * *(Optional)* `yq` and `docker` installed
 
 ## Setup
@@ -107,6 +108,17 @@ starting Spark job on a K8s cluster.
 Once all the components are installed, we then need to set up a S3 bucket and copy the relevant 
 data from this repository in, e.g.`data` and `script`, that will be used in this demo.
 
+First, generate the data to be used in the Demo. Make sure that you have your Kaggle credentials
+setup in the `~/.kaggle/kaggle.json` file. Then run the following script
+
+```shell
+python scripts/dataset_generation.py
+```
+
+This will download the dataset from Kaggle and patch it accordingly for the sake of the Case in 
+the demo.
+
+Next upload the generated file in the S3 bucket. 
 In order to do so, you can use the Python scripts bundled in this repository for creating and 
 setting up (e.g. copying the files needed for the demo) the S3 bucket
 
