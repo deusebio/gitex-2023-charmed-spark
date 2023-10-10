@@ -108,11 +108,18 @@ starting Spark job on a K8s cluster.
 Once all the components are installed, we then need to set up a S3 bucket and copy the relevant 
 data from this repository in, e.g.`data` and `script`, that will be used in this demo.
 
+The code below uses some python scripts for doing some of the task required in the setup. We 
+suggest you to create a Python virtualenv and install the relevant packages with 
+
+```shell
+pip install -r requirements.txt
+```
+
 First, generate the data to be used in the Demo. Make sure that you have your Kaggle credentials
 setup in the `~/.kaggle/kaggle.json` file. Then run the following script
 
 ```shell
-python scripts/dataset_generation.py
+python3 scripts/dataset_generation.py
 ```
 
 This will download the dataset from Kaggle and patch it accordingly for the sake of the Case in 
@@ -123,7 +130,7 @@ In order to do so, you can use the Python scripts bundled in this repository for
 setting up (e.g. copying the files needed for the demo) the S3 bucket
 
 ```shell
-python scripts/spark_bucket.py \
+python3 scripts/spark_bucket.py \
   --action create setup \
   --access-key $AWS_ACCESS_KEY \
   --secret-key $AWS_SECRET_KEY \
@@ -260,22 +267,16 @@ juju run s3-integrator/leader sync-s3-credentials \
   access-key=$AWS_ACCESS_KEY secret-key=$AWS_SECRET_KEY
 ```
 
-###### Traefik K8s 
-
-In order to expose the Spark History server UI using the Route53 domain, fetch the internal 
-load balancer address
-
-```shell
-juju status --format yaml | yq .applications.traefik-k8s.address
-```
-
-and use this information to create a record in your domain, e.g. `spark.<domain-name>`.
-
 ##### Integrate the charms
 
 At this point, the `spark-history-server-k8s` can be related to the `s3-integrator` charm and to
 the `traefik-k8s` charm to be able to read the logs from S3 and to be exposed externally, 
 respectively.
+
+```shell
+juju relate spark-history-server-k8s s3-integrator
+juju relate spark-history-server-k8s traefik-k8s
+```
 
 Once the charms settle down into `active/idle` states, you can then fetch the external Spark 
 History Server URL using `traefik-k8s` via the action
@@ -301,7 +302,7 @@ Finally, you can also remove the S3-bucket that was used during the demo via the
 script
 
 ```shell
-python scripts/spark_bucket.py \
+python3 scripts/spark_bucket.py \
   --action delete \
   --access-key $AWS_ACCESS_KEY \
   --secret-key $AWS_SECRET_KEY \
