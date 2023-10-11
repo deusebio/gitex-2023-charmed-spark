@@ -193,6 +193,10 @@ It is important for the image to have access to the Kubeconfig file (in order to
 Spark configuration via the `spark-client` CLI) as well as the local notebooks directory to access 
 to the notebook already provided. 
 
+> :warning: If you want to read/write to the notebook directory (e.g. for opening/saving notebooks)
+> please make sure you set the permission of the folder correctly. Note that the jupyter process
+> will be running in a docker container with a user named *_daemon_*.  
+
 When the image is up and running, you can navigate with your browser to
 
 ```shell
