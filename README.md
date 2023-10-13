@@ -185,11 +185,13 @@ the S3 credentials to the Spark History server to be able to read the logs from 
 juju relate spark-history-server-k8s s3-integrator
 ```
 
+<!---
 ##### Import Spark Dashboards (optional)
 
 If you want to have some simple Spark dashboard already available to you in Grafana, configure 
-this using the `cos-configuration-k8s` charm. Note that you should have access to github for this
-to work:
+this using the `cos-configuration-k8s` charm. 
+
+> Note that you should have read access to the Github repository below for this  to work
 
 ```shell
 juju deploy cos-configuration-k8s \
@@ -197,9 +199,15 @@ juju deploy cos-configuration-k8s \
   --config git_branch=dashboard \
   --config git_depth=1 \
   --config grafana_dashboards_path=dashboards/prod/grafana/
-# relate cos-configration charm to import grafana dashboard
+```
+
+Once this is deployed, you can relate to grafana in order to provide the dashboard across the 
+relation
+
+```shell
 juju relate cos-configuration-k8s grafana
 ```
+-->
 
 ##### Fetch your endpoints!
 

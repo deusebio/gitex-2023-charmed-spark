@@ -27,6 +27,22 @@ applications:
       title: Canonical Observability Stack
     constraints: arch=amd64
     trust: true
+  cos-configuration-k8s:
+    charm: cos-configuration-k8s
+    channel: stable
+    revision: 15
+    series: focal
+    resources:
+      git-sync-image: 8
+    scale: 1
+    options:
+      git_branch: dashboard
+      git_depth: 1
+      git_repo: https://github.com/canonical/charmed-spark-rock
+      grafana_dashboards_path: dashboards/prod/grafana/
+    constraints: arch=amd64
+    storage:
+      content-from-git: kubernetes,1,1024M
   grafana:
     charm: grafana-k8s
     channel: stable
@@ -106,6 +122,8 @@ applications:
     channel: edge
     revision: 161
     series: focal
+    resources:
+      traefik-image: 152
     scale: 1
     constraints: arch=amd64
     storage:
@@ -160,4 +178,7 @@ relations:
   - prometheus-pushgateway-k8s:metrics-endpoint
 - - scrape-interval-config:metrics-endpoint
   - prometheus:metrics-endpoint
+- - cos-configuration-k8s:grafana-dashboards
+  - grafana:grafana-dashboard
+
 
