@@ -178,9 +178,8 @@ juju run s3-integrator/leader sync-s3-credentials \
 
 ##### Integrate the charms
 
-At this point, the `spark-history-server-k8s` can be related to the `s3-integrator` charm and to
-the `traefik-k8s` charm to be able to read the logs from S3 and to be exposed externally, 
-respectively.
+At this point, the `spark-history-server-k8s` can be related to the `s3-integrator` to provide
+the S3 credentials to the Spark History server to be able to read the logs from the object storage. 
 
 ```shell
 juju relate spark-history-server-k8s s3-integrator
@@ -205,10 +204,10 @@ juju relate cos-configuration-k8s grafana
 ##### Fetch your endpoints!
 
 Once the charms settle down into `active/idle` states, you can then fetch the external Spark 
-History Server URL using `traefik-k8s` via the action
+History Server URL using `traefik` via the action
 
 ```shell
-juju run traefik-k8s/leader show-proxied-endpoints
+juju run traefik/leader show-proxied-endpoints
 ```
 
 As you can see from the output of the action, you will now have two tools to perform monitoring:
