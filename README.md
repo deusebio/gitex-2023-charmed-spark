@@ -138,6 +138,72 @@ python3 scripts/spark_bucket.py \
   --bucket $AWS_S3_BUCKET 
 ```
 
+#### Setup Monitoring tools
+
+You need to bootstrap a Juju controller responsible for managing your services
+
+```shell
+juju bootstrap microk8s micro
+```
+
+##### Deploy the charms
+
+First, add a new model/namespace where to deploy the History Server related charms
+
+```shell
+juju add-model spark
+```
+
+You can now deploy all the charms required by the Monitoring stack, using the provided bundle 
+(but replacing the environment variable)
+
+```shell
+juju deploy --trust \
+ <( yq e '.applications.s3-integrator.options.bucket=strenv(AWS_S3_BUCKET) | .applications.s3-integrator.options.endpoint=strenv(AWS_S3_ENDPOINT)' ./confs/bundle.yaml )
+```
+
+##### Setup the charms 
+
+Once the charms are deployed, you need to perform some configurations to setup the history-server
+charm to correctly read the data from the S3 logs.
+
+###### S3 Integrator 
+
+the `s3-integrator` needs to be correctly configured by providing the S3 credentials, e.g. 
+
+```shell
+juju run s3-integrator/leader sync-s3-credentials \
+  access-key=$AWS_ACCESS_KEY secret-key=$AWS_SECRET_KEY
+```
+
+##### Integrate the charms
+
+At this point, the `spark-history-server-k8s` can be related to the `s3-integrator` charm and to
+the `traefik-k8s` charm to be able to read the logs from S3 and to be exposed externally, 
+respectively.
+
+```shell
+juju relate spark-history-server-k8s s3-integrator
+```
+
+Once the charms settle down into `active/idle` states, you can then fetch the external Spark 
+History Server URL using `traefik-k8s` via the action
+
+```shell
+juju run traefik-k8s/leader show-proxied-endpoints
+```
+
+As you can see from the output of the action, you will now have two tools to perform monitoring:
+1. Spark History Server, that is a UI that most Spark users are accustomed to, to analyze their
+ jobs, at a more business level (e.g. jobs separated by the different steps and so on). Spark 
+ History server does not support authentication yet. 
+2. Grafana Dashboards, that is more oriented to cluster administrators, allowing to set up alerts
+ and dashboarding based on resource utilization. In order to retrive the credentials for logging
+ into the Grafana dashboard, use the following action:
+```shell
+juju run grafana/leader get-admin-password
+```
+
 #### Setup K8s to run Spark Jobs
 
 You can now create the Spark service account on the K8s cluster that will be used to run the 
@@ -145,18 +211,21 @@ Spark workloads. The services will be created via the `spark-client.service-acco
 as `spark-client` will provide enhanced features to run your Spark jobs seamlessly integrated 
 with the other parts of the Charmed Spark solution. 
 
-But before creating the service account, make sure that you create a dedicated namespace where 
-to manage your spark jobs, e.g. 
-
-```shell
-kubectl create ns spark
-```
-
 For instance, `spark-client` allows you to bind your service account a hierarchical set of 
 configurations that will be used when submitting Spark jobs. For instance, in this demo we will 
 use S3 bucket to fetch and store data. Spark settings are specified in a 
-[configuration file](./confs/s3.conf) and can be fed into the service account creation command
- (that also handles the parsing of environment variables specified in the configuration file), e.g. 
+[configuration file](./confs/s3.conf) and can be fed into the service account creation command,
+ also handling the parsing of environment variables specified in the configuration file, such as:
+
+* S3 Bucket credentials provided above, `AWS_*` env variables
+* Endpoint of Prometheus pushgateway for pushing the driver and executor metrics:
+
+```shell
+export PROMETHEUS_GATEWAY=$(juju status --format=yaml | yq ".applications.prometheus-pushgateway-k8s.address") 
+export PROMETHEUS_PORT=9091
+```
+
+We can now create the Spark service account that will be used to run workloads:
 
 ```shell
 spark-client.service-account-registry create \
@@ -233,64 +302,6 @@ pysparkshell-79b4df8ad74ab7da-exec-1                        1/1     Running     
 pysparkshell-79b4df8ad74ab7da-exec-2                        1/1     Running     0          5m29s
 ```
 
-#### Deploy Spark History Server with Juju
-
-You need to bootstrap a Juju controller responsible for managing your services
-
-```shell
-juju bootstrap microk8s micro
-```
-
-##### Deploy the charms
-
-First, add a new model/namespace where to deploy the History Server related charms
-
-```shell
-juju add-model history-server
-```
-
-You can now deploy all the charms required by the History Server, using the provided bundle 
-(but replacing the environment variable)
-
-```shell
-juju deploy --trust \
- <( yq e '.applications.s3-integrator.options.bucket=strenv(AWS_S3_BUCKET) | .applications.s3-integrator.options.endpoint=strenv(AWS_S3_ENDPOINT)' ./confs/history-server.yaml )
-```
-
-##### Setup the charms 
-
-Once the charms are deployed, you need to perform some configurations on the `s3-integrator` and 
-on `traefik-k8s`.
-
-###### S3 Integrator 
-
-the `s3-integrator` needs to be correctly configured by providing the S3 credentials, e.g. 
-
-```shell
-juju run s3-integrator/leader sync-s3-credentials \
-  access-key=$AWS_ACCESS_KEY secret-key=$AWS_SECRET_KEY
-```
-
-##### Integrate the charms
-
-At this point, the `spark-history-server-k8s` can be related to the `s3-integrator` charm and to
-the `traefik-k8s` charm to be able to read the logs from S3 and to be exposed externally, 
-respectively.
-
-```shell
-juju relate spark-history-server-k8s s3-integrator
-juju relate spark-history-server-k8s traefik-k8s
-```
-
-Once the charms settle down into `active/idle` states, you can then fetch the external Spark 
-History Server URL using `traefik-k8s` via the action
-
-```shell
-juju run traefik-k8s/leader show-proxied-endpoints
-```
-
-In your browser, you should now be able to access the Spark History Server UI and explore the logs
-of completed jobs. 
 
 ### Cleanup
 
