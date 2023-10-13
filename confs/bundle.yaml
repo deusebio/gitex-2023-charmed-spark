@@ -85,6 +85,14 @@ applications:
       endpoint: $AWS_S3_ENDPOINT
       path: spark-events
     constraints: arch=amd64
+  scrape-interval-config:
+    charm: prometheus-scrape-config-k8s
+    channel: stable
+    revision: 39
+    series: focal
+    scale: 1
+    options:
+      scrape_interval: 10s
   spark-history-server-k8s:
     charm: spark-history-server-k8s
     channel: 3.4/edge
@@ -150,3 +158,8 @@ relations:
   - prometheus:metrics-endpoint
 - - spark-history-server-k8s:ingress
   - traefik:ingress
+- - scrape-interval-config:configurable-scrape-jobs
+  - prometheus-pushgateway-k8s:metrics-endpoint
+- - scrape-interval-config:metrics-endpoint
+  - prometheus:metrics-endpoint
+

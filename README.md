@@ -186,6 +186,24 @@ respectively.
 juju relate spark-history-server-k8s s3-integrator
 ```
 
+##### Import Spark Dashboards (optional)
+
+If you want to have some simple Spark dashboard already available to you in Grafana, configure 
+this using the `cos-configuration-k8s` charm. Note that you should have access to github for this
+to work:
+
+```shell
+juju deploy cos-configuration-k8s \
+  --config git_repo=https://github.com/canonical/charmed-spark-rock \
+  --config git_branch=dashboard \
+  --config git_depth=1 \
+  --config grafana_dashboards_path=dashboards/prod/grafana/
+# relate cos-configration charm to import grafana dashboard
+juju relate cos-configuration-k8s grafana
+```
+
+##### Fetch your endpoints!
+
 Once the charms settle down into `active/idle` states, you can then fetch the external Spark 
 History Server URL using `traefik-k8s` via the action
 
