@@ -103,11 +103,9 @@ applications:
     constraints: arch=amd64
   traefik:
     charm: traefik-k8s
-    channel: stable
-    revision: 129
+    channel: edge
+    revision: 161
     series: focal
-    resources:
-      traefik-image: 119
     scale: 1
     constraints: arch=amd64
     storage:
