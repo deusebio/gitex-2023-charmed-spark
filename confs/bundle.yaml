@@ -112,9 +112,9 @@ applications:
   spark-history-server-k8s:
     charm: spark-history-server-k8s
     channel: 3.4/edge
-    revision: 9
+    revision: 15
     resources:
-      spark-history-server-image: 7
+      spark-history-server-image: 9
     scale: 1
     constraints: arch=amd64
   traefik:
